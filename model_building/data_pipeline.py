@@ -11,7 +11,17 @@ ACCENT_CHARS = ['À', 'Á', 'Â', 'Ã', 'Ä', 'Å', 'à', 'á', 'â', 'ã', 'ä'
 
 TRANSLATE_TABLE = str.maketrans({c:' ' for c in ACCENT_CHARS})
 
+
 def clean_text(text):
+    """
+    Cleans the input text.
+
+    Args:
+        text: The string to clean
+
+    Returns:
+        The cleaned text.
+    """
 
     # Account for html characters
     new_text = html.unescape(text)
@@ -113,8 +123,6 @@ def create_tensorflow_datasets(train_df:pd.DataFrame, val_df:pd.DataFrame, test_
         batch_size: The batch size to use during training.
 
     Returns:
-        train_ds_str, val_ds_str, test_ds_str: String versions 
-            of the training, validation, and test datasets 
         train_ds, val_ds, test_ds: The final versions
             of the training, validation, and test datasets
     """
@@ -140,7 +148,8 @@ def predict_on_kaggle_test_set(kaggle_test_dir:str, model, final_activation:str)
     Args:
         kaggle_test_dir: The directory for the kaggle test data.
         model: The tensorflow model
-        final_activation: #TODO: TBD
+        final_activation: The activation function used in the final later.
+            It should be either relu or sigmoid.
 
     Returns:
         The final submission DataFrame
@@ -149,8 +158,6 @@ def predict_on_kaggle_test_set(kaggle_test_dir:str, model, final_activation:str)
     test_df = pd.read_csv(f'{kaggle_test_dir}/test.csv')
     test_df.fillna('', inplace=True)
     test_df['text'] = test_df['text'].apply(clean_text)
-
-    # print('Submission test set size:', len(test_df))
 
     predictions = model.predict(test_df['text'].values)
     

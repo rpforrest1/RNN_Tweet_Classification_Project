@@ -21,6 +21,15 @@ from time import gmtime, time
 
 def get_vectorizer(train_ds, max_tokens, output_sequence_length=None):
     """
+    Creates the text vectorizer.
+
+    Args:
+        train_ds: The training dataset.
+        max_tokens: The max number of tokens in the vocabulary.
+        output_sequence_length: The output sequence length for the text vectorizer.
+    
+    Returns:
+        The tensorflow vectorizer.
     """
 
     vectorizer = layers.TextVectorization(max_tokens=max_tokens,
@@ -33,10 +42,20 @@ def get_vectorizer(train_ds, max_tokens, output_sequence_length=None):
 
 def get_embedding_layer(embed_size, vocab_size, pretrained_model_str=None, vectorizer=None):
     """
+    Creates the embedding layer.
+
+    Args:
+        embed_size: The embedding size.
+        vocab_size: The vocabulary size.
+        pretrained_model_str: A string that defines the gensim pretrained model. If None,
+            the embedding will be trained within the model.
+        vectorizer: The text vectorizer.
+    
+    Returns:
+        The tensorflow embedding layer.
     """
 
     if pretrained_model_str:
-        # print(f'Using pretrained model: {pretrained_model_str}.')
         pretrained_model = downloader.load(pretrained_model_str)
 
         vocabulary = vectorizer.get_vocabulary()
@@ -66,6 +85,24 @@ def get_embedding_layer(embed_size, vocab_size, pretrained_model_str=None, vecto
 
 def build_model(vectorizer, embedding_layer, use_bidirectional, rnn_layer, rnn_units, dense_units, final_dropout_rate, activation, optimizer, loss):
     """
+    Builds the tensorflow model.
+
+    Args:
+        vectorizer: The tensorflow vectorizer layer object.
+        embedding_layer: The tensorflow embedding layer.
+        use_bidirectional: If set to True, the RNN layers will be bidirectional.
+        rnn_layer: The tensorflow class object that defines the type of RNN layer to use. (layers.GRU for example)
+        rnn_units: A list that defines the number of RNN layers based on the number units provided for that index.
+            The value at that index is the number of units for that layer.
+        dense_units: A list that defines the number of dense layers based on the number units provided for that index.
+            The value at that index is the number of units for that layer.
+        final_dropout_rate: A float that provides the dropout percentage after the final layer before classification.
+        activation: A string for the activation function to use in all the dense layers.
+        optimizer: The tensorflow class object that defines the optimizer to use.
+        loss: The loss function to use. Can be a string or tensorflow object.
+
+    Returns:
+        The tensorflow model.
     """
 
     tf.random.set_seed(15)
@@ -113,6 +150,20 @@ def build_model(vectorizer, embedding_layer, use_bidirectional, rnn_layer, rnn_u
 
 def create_fit_and_save_model(model_name, train_df, val_df, test_df, epochs, params, final_fitting=False):
     """
+    Creates the tensormodel given the parameters.
+
+    Args:
+        model_name: The string name for the model.
+        train_df: The training dataframe.
+        val_df: The validation dataframe.
+        test_df: The test dataframe.
+        epochs: The number of epochs for model training.
+        params: A tuple with all model building parameters.
+        final_fitting: A boolean where True means its the final batch of models to fit. This will model
+            checkpoint data in a different folder name (model_checkpoints_final).
+
+    Returns:
+        The f1-score for the test dataset.
     """
 
     vocab_size, embed_size_with_pretrained_model, batch_size, bidirectional, rnn_layer, rnn_units, dense_units, activation, final_dropout, optimizer = params
@@ -182,13 +233,14 @@ def save_history(history_obj, model_output_dir, MODEL_NAME):
         MODEL_NAME: The name of the model
     
     Returns:
-        A dictionary of the history data
+        A dictionary of the history data.
     """
 
     history_dict = copy.deepcopy(history_obj.history)
 
     for k, v in history_dict.items():
         history_dict[k] = list(np.array(history_dict[k]).astype(float))
+    
     if 'precision' in history_dict.keys() and 'recall' in history_dict.keys():
         pre = np.array(history_dict['precision'])
         rec = np.array(history_dict['recall'])
@@ -271,4 +323,14 @@ def plot_learning_rate(history:dict, model_num=None):
 
 
 def bold(text):
+    """
+    Bold the input text for printing.
+
+    Args:
+        text: The input text.
+
+    Returns:
+        The text with the bold ANSI escape code.
+    """
+
     return f"\033[1m{text}\033[0m"
