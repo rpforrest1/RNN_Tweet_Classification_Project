@@ -11,7 +11,10 @@ from keras.models import Sequential
 import keras
 import tensorflow as tf
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from data_pipeline import create_tensorflow_datasets
+try:
+    from .data_pipeline import create_tensorflow_datasets
+except:
+    from data_pipeline import create_tensorflow_datasets
 from time import gmtime, time
 
 
@@ -94,10 +97,13 @@ def build_model(vectorizer, embedding_layer, use_bidirectional, rnn_layer, rnn_u
             
     # Dense Layers
     for i, units in enumerate(dense_units):
+        if i == (len(dense_units)-1):
+            # Add dropout right before the final dense layer
+            if final_dropout_rate:
+                model.add(layers.Dropout(final_dropout_rate))
+        
         model.add(layers.Dense(units, activation=activation))
     
-    if final_dropout_rate:
-        model.add(layers.Dropout(final_dropout_rate))
 
     # Compile Model
     model.compile(optimizer=optimizer(), loss=loss, metrics=list(model_metrics.values()))
@@ -105,7 +111,7 @@ def build_model(vectorizer, embedding_layer, use_bidirectional, rnn_layer, rnn_u
     return model
 
 
-def create_fit_and_save_model(model_name, train_df, val_df, test_df, epochs, params):
+def create_fit_and_save_model(model_name, train_df, val_df, test_df, epochs, params, final_fitting=False):
     """
     """
 
@@ -127,8 +133,12 @@ def create_fit_and_save_model(model_name, train_df, val_df, test_df, epochs, par
                         optimizer=optimizer,
                         loss='binary_crossentropy'
                        )
-
-    model_output_dir = './model_checkpoints'
+    
+    if final_fitting:
+        model_output_dir = './model_checkpoints_final'
+    else:
+        model_output_dir = './model_checkpoints'
+    
     checkpoint_path = f"{model_output_dir}/{model_name}/cp.ckpt"
     checkpoint_dir = os.path.dirname(checkpoint_path)
     
@@ -154,8 +164,12 @@ def create_fit_and_save_model(model_name, train_df, val_df, test_df, epochs, par
     # Check test set and save results
     test_metrics = model.evaluate(test_ds, verbose=0)
     test_metrics = map_to_metrics(model.metrics_names, test_metrics)
+    test_metrics['f1_score'] = 2*(test_metrics['precision']*test_metrics['recall']/(test_metrics['precision']+test_metrics['recall']+np.finfo(float).eps))
     test_metrics['total_time'] = total_time
+
     json.dump(test_metrics, open(f"{model_output_dir}/{model_name}/test_metrics.json", 'w'))
+
+    return test_metrics['f1_score']
 
 
 def save_history(history_obj, model_output_dir, MODEL_NAME):
@@ -254,3 +268,7 @@ def plot_learning_rate(history:dict, model_num=None):
     plt.ylabel('Learning Rate')
     plt.xticks(range(len(history['lr'])))
     plt.show()
+
+
+def bold(text):
+    return f"\033[1m{text}\033[0m"

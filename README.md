@@ -1,1 +1,1 @@
-# LSTM_Tweet_Classification_Project
+# RNN_Tweet_Classification_Project

@@ -4,3 +4,5 @@ data/
 __pycache__
 .DS_Store
 model_checkpoints/
+model_checkpoints_final/
+*.png

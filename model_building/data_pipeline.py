@@ -150,7 +150,7 @@ def predict_on_kaggle_test_set(kaggle_test_dir:str, model, final_activation:str)
     test_df.fillna('', inplace=True)
     test_df['text'] = test_df['text'].apply(clean_text)
 
-    print('Submission test set size:', len(test_df))
+    # print('Submission test set size:', len(test_df))
 
     predictions = model.predict(test_df['text'].values)
     
